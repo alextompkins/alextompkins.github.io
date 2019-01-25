@@ -4,13 +4,20 @@
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <title>Page not found &middot; alextompkins.me</title>
 
+    <!-- REWRITE for Single Page Applications -->
     <script type="text/javascript">
-        function isSPADirectory(location) {
-            return location.pathname.indexOf('auctioneer') !== -1;
-        }
-
+        var spas = ['auctioneer'];
         var segmentCount = 1;
         var l = window.location;
+
+        function isSPADirectory(location) {
+            for (var i = 0; i < spas.length; i++) {
+                if (location.pathname.indexOf(spas[i]) !== -1) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         if (isSPADirectory(l)) {
             l.replace(
@@ -22,7 +29,9 @@
             );
         }
     </script>
+    <!-- END REWRITE -->
 </head>
+
 <body>
     <div class="container">
         <h1>404</h1>
