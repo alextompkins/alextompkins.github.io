@@ -1,0 +1,15 @@
+body {
+    font-family: "Comic Sans MS", sans-serif;
+    background-color: #111111;
+    color: hotpink;
+}
+
+.spin {
+    border-radius: 50px;
+    animation: spin 1500ms alternate-reverse infinite;
+}
+
+@keyframes spin {
+    from { transform:rotate(0deg); }
+    to { transform:rotate(360deg); }
+}
