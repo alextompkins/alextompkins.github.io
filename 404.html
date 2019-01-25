@@ -5,7 +5,24 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; connect-src 'self'">
     <title>Page not found &middot; alextompkins.me</title>
 
-    <script type="text/javascript" src="/rewrite_404.js"></script>
+    <script type="text/javascript">
+        function isSPADirectory(location) {
+            return location.indexOf('auctioneer') !== -1;
+        }
+
+        var segmentCount = 1;
+        var l = window.location;
+
+        if (isSPADirectory(l)) {
+            l.replace(
+                l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+                l.pathname.split('/').slice(0, 1 + segmentCount).join('/') + '/?p=/' +
+                l.pathname.slice(1).split('/').slice(segmentCount).join('/').replace(/&/g, '~and~') +
+                (l.search ? '&q=' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+                l.hash
+            );
+        }
+    </script>
 </head>
 <body>
     <div class="container">
