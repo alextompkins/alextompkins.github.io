@@ -1,0 +1,218 @@
+openapi: 3.0.0
+info:
+  title: "ESR Automated Bloodstain Measurement API"
+  version: 0.0.2
+  description: "WORK IN PROGRESS.\n\nThis document specifies the RESTful API for a server that will process single bloodstain images and return data about the trajectories of the blood drops that caused them."
+
+
+tags:
+  - name: bloodstains
+    description: Endpoints for uploading bloodstain patterns for processing.
+
+
+paths:
+  /patterns:
+    post:
+      tags:
+        - bloodstains
+      summary: Create a new bloodstain pattern.
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  patternId:
+                    $ref: '#/components/schemas/PatternId'
+        400:
+          description: Bad Request
+        404:
+          description: Not Found
+
+  /patterns/{patternId}/bloodstains:
+    parameters:
+      - name: patternId
+        description: ID of the pattern.
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/PatternId'
+    post:
+      tags:
+        - bloodstains
+      summary: Upload a bloodstain image for an existing pattern.
+      description: "This request should be sent in `multipart/form-data` format. \n\n* The `photo` part should be a PNG or JPEG image with standard form-data file format. \n\n* The `description` part should be sent as application/json."
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  $ref: '#/components/schemas/ImageFile'
+                description:
+                  $ref: '#/components/schemas/PhotoDescription'
+              required:
+                - photo
+                - description
+            encoding:
+              photo:
+                contentType: image/png, image/jpeg
+              description:
+                contentType: application/json
+        required: true
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BloodstainResult'
+        400:
+          description: Bad Request
+        404:
+          description: Not Found
+          
+  /patterns/{patternId}/bloodstains/{markerId}:
+    parameters:
+      - name: patternId
+        description: ID of the pattern.
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/PatternId'
+      - name: markerId
+        description: ID of the marker for this bloodstain.
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/PatternId'
+    get:
+      tags:
+        - bloodstains
+      summary: Retrieve the results for an already-processed bloodstain image.
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BloodstainResult'
+        404:
+          description: Not Found
+
+
+components:
+  schemas:
+    PatternId:
+      type: string
+      
+    MarkerId:
+      type: string
+ 
+    ImageFile:
+      type: string
+      format: binary
+      description: The raw content of the JPEG or PNG image file.
+      example: Raw content of JPEG or PNG image file
+      
+    PhotoDescription:
+      type: object
+      description: Data about the image and the bloodstain captured within it. 
+      properties:
+        markerId:
+          $ref: '#/components/schemas/MarkerId'
+        position:
+          type: object
+          description: The position on the plane (measured from the origin) of the top-left corner of the photo.
+          properties:
+            x:
+              $ref: '#/components/schemas/RealDistance'
+            z:
+              $ref: '#/components/schemas/RealDistance'
+        dimensions:
+          type: object
+          description: The real-world width and height of the section of the plane that the image captures. 
+          properties:
+            width:
+              $ref: '#/components/schemas/RealDistance'
+            height:
+              $ref: '#/components/schemas/RealDistance'
+        guidePoint:
+          type: object
+          description: A user-selected location in the image that contains the bloodstain. N.B. these are image coordinates, *NOT* world coordinates. 
+          properties:
+            photoX:
+              description: The pixel distance from the left-hand side of the image to the guide point. 
+              type: number
+              minimum: 0
+              maximum: 1
+            photoY:
+              description: The pixel distance from the top of the image to the guide point. 
+              type: number
+              minimum: 0
+              maximum: 1
+
+
+    RealDistance:
+      type: number
+      description: A real world distance, measured in metres.
+      example: 0.5419
+              
+    BloodstainResult:
+      type: object
+      properties:
+        markerId:
+          $ref: '#/components/schemas/MarkerId'
+        stainFound:
+          type: boolean
+          description: Whether a bloodstain could be found at the given guide point. 
+        alpha:
+          type: number
+          description: The angle between the blood droplet's trajectory and the surface/plane (in degrees).
+          minimum: 0
+          maximum: 90
+          example: 34.2
+        gamma:
+          type: number
+          description: The angle of the major axis through the bloodstain from vertical (in degrees).
+          minimum: 0
+          maximum: 360
+          example: 55.3
+        bloodstainPos:
+          description: The position on the plane (measured from the origin) of the centre of the bloodstain.
+          properties:
+            x:
+              $ref: '#/components/schemas/RealDistance'
+            z:
+              $ref: '#/components/schemas/RealDistance'
+        trajectory:
+          type: object
+          description: A normalised 3D vector for the trajectory of the blood drop *AWAY* from the wall.
+          properties:
+            x:
+              $ref: '#/components/schemas/RealDistance'
+            y:
+              $ref: '#/components/schemas/RealDistance'
+            z:
+              $ref: '#/components/schemas/RealDistance'
+        fittedEllipse:
+          $ref: '#/components/schemas/FittedEllipse'
+
+    FittedEllipse:
+      type: object
+      description: "The parameters for the equation of the ellipse fitted to the bloodstain. Takes the form `x^2/a^2 + z^2/b^2 = 1`. \n\nThis equation produces an ellipse with axes directly along the x and z axes, which can then be rotated by the `gamma` angle and translated by `bloodStainPos` to get the real world position/orientation."
+      properties:
+        a:
+          type: number
+          description: Coefficient of x^2 in the equation, measured in real world units.
+          example: 0.005
+        b:
+          type: number
+          description: Coefficient of z^2 in the equation, measured in real world units.
+          example: 0.012
+
+
+
