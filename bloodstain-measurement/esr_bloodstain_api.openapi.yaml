@@ -1,8 +1,8 @@
 openapi: 3.0.0
 info:
   title: "ESR Automated Bloodstain Measurement API"
-  version: 0.0.2
-  description: "WORK IN PROGRESS.\n\nThis document specifies the RESTful API for a server that will process single bloodstain images and return data about the trajectories of the blood drops that caused them."
+  version: 1.0.0
+  description: "This document specifies the RESTful API for a server that will process single bloodstain images and return data about the trajectories of the blood drops that caused them."
 
 
 tags:
